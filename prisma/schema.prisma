@@ -1,0 +1,100 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model FlooringType {
+  id          Int     @id @default(autoincrement())
+  name        String
+  description String
+  priceMin    Float // per sq ft, installed
+  priceMax    Float // per sq ft, installed
+  wearLayer   String  @default("")
+  imageUrl    String  @default("")
+  active      Boolean @default(true)
+  sortOrder   Int     @default(0)
+  quotes      Quote[]
+}
+
+model Extra {
+  id           Int          @id @default(autoincrement())
+  name         String
+  pricePerUnit Float
+  unit         String // "sqft" | "linear_ft" | "flat"
+  active       Boolean      @default(true)
+  sortOrder    Int          @default(0)
+  quoteExtras  QuoteExtra[]
+}
+
+model Quote {
+  id             Int          @id @default(autoincrement())
+  quoteNumber    String       @unique @default("")
+  customerName   String
+  email          String
+  phone          String
+  zip            String
+  contactTime    String       @default("")
+  smsConsent     Boolean      @default(false)
+  flooringType   FlooringType @relation(fields: [flooringTypeId], references: [id])
+  flooringTypeId Int
+  totalSqft      Float
+  estimateMin    Float
+  estimateMax    Float
+  status         String       @default("NEW") // NEW | CONTACTED | SCHEDULED | CLOSED | LOST
+  notes          String       @default("")
+  rooms          QuoteRoom[]
+  extras         QuoteExtra[]
+  createdAt      DateTime     @default(now())
+}
+
+model QuoteRoom {
+  id       Int    @id @default(autoincrement())
+  quote    Quote  @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+  quoteId  Int
+  roomName String
+  widthFt  Float
+  lengthFt Float
+  areaSqft Float
+}
+
+model QuoteExtra {
+  id       Int   @id @default(autoincrement())
+  quote    Quote @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+  quoteId  Int
+  extra    Extra @relation(fields: [extraId], references: [id])
+  extraId  Int
+  quantity Float
+  subtotal Float
+}
+
+model GalleryItem {
+  id        Int      @id @default(autoincrement())
+  type      String   @default("photo") // photo | video
+  url       String
+  title     String
+  city      String   @default("")
+  sortOrder Int      @default(0)
+  published Boolean  @default(true)
+  createdAt DateTime @default(now())
+}
+
+model Testimonial {
+  id           Int      @id @default(autoincrement())
+  customerName String
+  city         String   @default("")
+  rating       Int      @default(5)
+  text         String
+  approved     Boolean  @default(false)
+  createdAt    DateTime @default(now())
+}
+
+model AdminUser {
+  id           Int    @id @default(autoincrement())
+  email        String @unique
+  passwordHash String
+  name         String @default("Admin")
+}
