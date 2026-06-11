@@ -13,10 +13,19 @@ Pesquisa de mercado e plano completo: [PLANO.md](PLANO.md)
 
 ```bash
 npm install
-npm run db:push   # cria o banco SQLite (prisma/dev.db)
+# copie .env.example para .env e preencha as credenciais do Supabase
+npm run db:push   # cria as tabelas no Postgres (Supabase)
 npm run db:seed   # popula preços, depoimentos, galeria e usuário admin
 npm run dev       # http://localhost:3000
 ```
+
+## Supabase
+
+- **Projeto:** `4arenovation` (ref `subtdyoszcvwumlbyrpe`, us-east-1) — projeto exclusivo deste cliente
+- **Banco:** Postgres via Prisma (pooler na porta 6543 em runtime, 5432 para migrações)
+- **Storage:** bucket público `gallery` recebe os uploads de fotos/vídeos do admin
+- **RLS:** ativo em todas as tabelas, sem policies — a API pública do Supabase não expõe nada; todo acesso é server-side via Prisma
+- Credenciais em `.env` (fora do git): senha do banco, `SUPABASE_SECRET_KEY` (uploads) e publishable key
 
 ## Acessos
 
@@ -46,8 +55,8 @@ npx tsx scripts/test-login.ts   # valida credenciais do admin
 
 ## Próximos passos (produção)
 
-1. Migrar banco para Postgres (Supabase/Neon) — trocar datasource no Prisma
-2. E-mails transacionais (Resend) na criação de orçamento
-3. Deploy na Vercel + domínio
-4. SEO local: páginas por cidade + Google Business Profile
-5. Versão em português (next-intl)
+1. ~~Migrar banco para Supabase~~ ✅ feito
+2. ~~Site trilíngue~~ ✅ EN/PT/ES com bandeiras
+3. E-mails transacionais (Resend) na criação de orçamento
+4. Deploy na Vercel + domínio (www.4arenovationllc.com)
+5. SEO local: páginas por cidade + Google Business Profile

@@ -6,6 +6,7 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 # Project rules
 
-- **Database:** o dono usa **Supabase**. O SQLite local (Prisma) é só para desenvolvimento; em produção o banco vai para Supabase (trocar o datasource do Prisma para `postgresql` com a connection string do Supabase). Auth e storage de mídia também devem migrar para Supabase quando publicar.
+- **Database:** migrado para **Supabase** — projeto `4arenovation` (ref `subtdyoszcvwumlbyrpe`, us-east-1), exclusivo deste cliente. Postgres via Prisma (pooler 6543 runtime / 5432 migrações), uploads no bucket público `gallery` do Storage, RLS ativo sem policies (acesso só server-side). Credenciais no `.env` local (fora do git).
+- **Supabase:** cada cliente tem seu **próprio projeto Supabase**. Não perguntar antes de autenticar/criar — seguir direto.
 - **Idiomas:** este site é trilíngue (EN/PT/ES) com cookie + bandeiras. Em novos sites, sempre perguntar ao dono quais idiomas o site deve ter antes de construir.
 - Identidade da marca: ver `docs/` (cartão de visita e logo oficiais) e `PLANO.md`.

@@ -1,6 +1,5 @@
 "use server";
 
-import { writeFile, mkdir, unlink } from "fs/promises";
 import path from "path";
 import { randomBytes } from "crypto";
 import bcrypt from "bcryptjs";
@@ -9,6 +8,7 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
 import { createSession, destroySession, requireAdmin } from "@/lib/auth";
 import { QUOTE_STATUSES } from "@/lib/format";
+import { supabaseAdmin, GALLERY_BUCKET } from "@/lib/supabase";
 
 // ---------- Auth ----------
 
@@ -100,19 +100,26 @@ export async function uploadGalleryItem(formData: FormData) {
   const mediaType = ALLOWED_MEDIA[ext];
   if (!mediaType) return;
 
-  const uploadsDir = path.join(process.cwd(), "public", "uploads");
-  await mkdir(uploadsDir, { recursive: true });
   const fileName = `${Date.now()}-${randomBytes(4).toString("hex")}${ext}`;
-  await writeFile(
-    path.join(uploadsDir, fileName),
-    Buffer.from(await file.arrayBuffer())
-  );
+  const supabase = supabaseAdmin();
+  const { error: uploadError } = await supabase.storage
+    .from(GALLERY_BUCKET)
+    .upload(fileName, Buffer.from(await file.arrayBuffer()), {
+      contentType: file.type || undefined,
+    });
+  if (uploadError) {
+    console.error("Supabase Storage upload failed:", uploadError.message);
+    return;
+  }
+  const { data: publicUrl } = supabase.storage
+    .from(GALLERY_BUCKET)
+    .getPublicUrl(fileName);
 
   const maxSort = await prisma.galleryItem.aggregate({ _max: { sortOrder: true } });
   await prisma.galleryItem.create({
     data: {
       type: mediaType,
-      url: `/uploads/${fileName}`,
+      url: publicUrl.publicUrl,
       title,
       city,
       sortOrder: (maxSort._max.sortOrder ?? 0) + 1,
@@ -142,9 +149,11 @@ export async function deleteGalleryItem(formData: FormData) {
   const item = await prisma.galleryItem.findUnique({ where: { id } });
   if (!item) return;
   await prisma.galleryItem.delete({ where: { id } });
-  if (item.url.startsWith("/uploads/")) {
+  const marker = `/object/public/${GALLERY_BUCKET}/`;
+  if (item.url.includes(marker)) {
+    const fileName = item.url.split(marker)[1];
     try {
-      await unlink(path.join(process.cwd(), "public", item.url));
+      await supabaseAdmin().storage.from(GALLERY_BUCKET).remove([fileName]);
     } catch {
       // file already removed — DB record is what matters
     }
